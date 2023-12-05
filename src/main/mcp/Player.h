@@ -11,11 +11,16 @@ class Player {
     int damage;
     int vic;
     double cost;
+    int max_edges;
+    int actual_edges;
 
-    void initial_cost(){
-        return vetices*(vertices-1)/2;
+    void edges(){
+        max_edges vetices*(vertices-1)/2;
     }
 
+    void initial_cost(){
+        return max_edges-actual_edges;
+    }
 
     public:
 
