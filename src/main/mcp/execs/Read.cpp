@@ -13,15 +13,17 @@ int main(int argc, char* argv[]) {
     std::string graph6String = IO::readGraph6File(filename);
     std::cout << graph6String << std::endl;
 
+
     if (!graph6String.empty()) {
-        Graph graph(graph6String);
+        const Graph graph(graph6String);
 
         std::cout << "Vertices: " << graph.getVertices() << std::endl;
         std::cout << "Adjacency Matrix:" << std::endl;
-        const auto& adjMatrix = graph.getAdjMatrix();
-        for (const auto& row : adjMatrix) {
-            for (int value : row) {
-                std::cout << value << " ";
+
+        const int* adjMatrix = graph.getAdjMatrix();
+        for (int i = 0; i < graph.getVertices(); i++) {
+            for (int j = 0; j < graph.getVertices(); j++) {
+                std::cout << adjMatrix[i * graph.getVertices() + j] << " ";
             }
             std::cout << std::endl;
         }

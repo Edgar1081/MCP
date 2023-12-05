@@ -1,29 +1,29 @@
 #pragma once
 #include <iostream>
 #include <string>
-#include <vector>
 #include <memory>
+#include <bitset>
 
 class Graph {
 private:
     std::string graph6;
     int vertices;
     std::string bits;
-    std::unique_ptr<std::vector<std::vector<int>>> adjMatrix;
+    std::unique_ptr<int[]> adjMatrix;
 
 public:
     Graph(const std::string& graph6) : graph6(graph6), vertices(0), bits(""), adjMatrix(nullptr) {
         decodeVertices();
         bits = decodeBits();
-        adjMatrix = std::make_unique<std::vector<std::vector<int>>>(decodeAdjMatrix());
+        decodeAdjMatrix();
     }
 
     int getVertices() const {
         return vertices;
     }
 
-    const std::vector<std::vector<int>>& getAdjMatrix() const {
-        return *adjMatrix;
+    const int* getAdjMatrix() const {
+        return adjMatrix.get();
     }
 
 private:
@@ -61,17 +61,18 @@ private:
         return bits;
     }
 
-    std::vector<std::vector<int>> decodeAdjMatrix() {
+    void decodeAdjMatrix() {
+        adjMatrix = std::make_unique<int[]>(vertices * vertices);
+
+        // Linear index to access 2D array: adjMatrix[i * vertices + j]
         int index = 0;
-        std::vector<std::vector<int>> matrix(vertices, std::vector<int>(vertices, 0));
         for (int j = 1; j < vertices; j++) {
             for (int i = 0; i < j; i++) {
                 int bit = bits[index] - '0';
-                matrix[i][j] = bit;
-                matrix[j][i] = bit;
+                adjMatrix[i * vertices + j] = bit;
+                adjMatrix[j * vertices + i] = bit;
                 index++;
             }
         }
-        return matrix;
     }
 };
