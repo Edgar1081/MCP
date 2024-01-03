@@ -13,13 +13,13 @@ class Player {
         int vertices;
         int seed;
         int hp;
+        std::set<int> subset;
         int damage;
         int vic;
         std::mt19937 generator;
         int max_vertices;
         int max_edges;
         int actual_edges;
-        std::bitset<1000> subset;
         double cost;
         std::uniform_int_distribution<int> distribution;
 
@@ -32,27 +32,34 @@ class Player {
         }
 
         void get_injured(std::shared_ptr<Player> best){
-
             damage++;
             if(damage > hp){
                 respawn(best);
                 return;
             }
             std::uniform_int_distribution<int> clone(0,99);
-            int percent = clone(generator);
+            int percent = clone(generator)/vertices;
             int c = 0;
-            std::set<int> selectedIndices;
+            std::shared_ptr<std::set<int>> iused;
             while(c < percent){
-                std::uniform_int_distribution<int> index1(0, max_vertices);
-                std::uniform_int_distribution<int> index0(0, max_vertices);
+                int indexE = -1;
+                int indexI = -1;
 
-                if(index1(generator) == 0){
+                do {
+                    indexE = distribution(generator);
+                } while (subset.find(indexE) == subset.end());
 
-                }
+                do {
+                    indexI = distribution(generator);
+                } while (subset.find(indexI) != subset.end());
 
-
+                subset.erase(indexE);
+                subset.insert(indexI);
             }
+
+            actual_edges = count_edges();
         }
+
 
     private:
         int maxedges() {
@@ -63,38 +70,31 @@ class Player {
             return max_edges - actual_edges;
         }
 
-        void respawn(std::shared_ptr<Player> best){}
-
-
-
-        void recal_cost(){
-
+        void respawn(std::shared_ptr<Player> best){
+            init_subset();
+            actual_edges = count_edges();
         }
 
         int count_edges(){
-            int c = 0;
-            for(int i = 0; i < max_vertices; i++){
-                if(subset[i] == 0)
-                    continue;
-                for(int j = i+1; j < max_edges; j++){
-                    if(subset[j] == 0)
-                        continue;
-                    c += graph->get_edge(i,j);
+            int e = 0;
+            for (std::set<int>::iterator it = subset.begin(); it != subset.end(); ++it) {
+                for (std::set<int>::iterator it2 = it; it2 != subset.end(); ++it) {
+                    if(graph->get_edge(*it, *it2) == 1)
+                        e++;
                 }
             }
-            return c;
+            return e;
         }
 
         void init_subset() {
-            std::set<int> selectedIndices;
-
-            while (subset.count() < static_cast<std::size_t>(vertices)) {
-                int index = distribution(generator);
-
-                if (selectedIndices.find(index) == selectedIndices.end()) {
-                    subset.set(index);
-                    selectedIndices.insert(index);
+            int c = 0;
+            while(c < vertices){
+                int i = distribution(generator);
+                if(subset.find(i) == subset.end()){
+                    c++;
+                    subset.insert(i);
                 }
+
             }
         }
 };

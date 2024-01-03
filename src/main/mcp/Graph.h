@@ -13,7 +13,9 @@ class Graph {
         int n_edges;
 
     public:
-        Graph(const std::string& graph6) : graph6(graph6), vertices(0), bits(""), adjMatrix(nullptr) {
+        Graph(const std::string& graph6) :
+            graph6(graph6), vertices(0),bits(""),
+            adjMatrix(nullptr) {
             decodeVertices();
             bits = decodeBits();
             decodeAdjMatrix();
