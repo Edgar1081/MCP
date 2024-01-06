@@ -5,96 +5,145 @@
 #include <bitset>
 #include <random>
 #include <set>
+#include <unordered_set>
+#include <algorithm>
+#include <random>
 #include "Graph.h"
 
 class Player {
-    private:
-        std::shared_ptr<Graph> graph;
-        int vertices;
-        int seed;
-        int hp;
-        std::set<int> subset;
-        int damage;
-        int vic;
-        std::mt19937 generator;
-        int max_vertices;
-        int max_edges;
-        int actual_edges;
-        double cost;
-        std::uniform_int_distribution<int> distribution;
+private:
+    std::shared_ptr<Graph> graph;
+    int vertices;
+    int seed;
+    int hp;
+    std::shared_ptr<std::unordered_set<int>> subset;
+    std::shared_ptr<std::unordered_set<int>> bounds;
+    std::mt19937 generator;
+    int damage;
+    int vic;
+    int max_vertices;
+    int max_edges;
+    int actual_edges;
+    double cost;
+    std::uniform_int_distribution<int> distribution;
 
-    public:
-        Player(std::shared_ptr<Graph> _graph, int _vertices, int _seed, int _hp) :
-            graph(_graph), vertices(_vertices), seed(_seed), hp(_hp), damage(0),
-            vic(0), generator(_seed),max_vertices(_graph->getVertices()),
-            max_edges(maxedges()), actual_edges(count_edges()),
-            cost(initial_cost()), distribution(0, max_vertices) {
+public:
+    Player(std::shared_ptr<Graph> _graph, int _vertices, int _seed, int _hp,
+    std::shared_ptr<std::unordered_set<int>> _bounds, std::mt19937 _generator) :
+        graph(_graph), vertices(_vertices), seed(_seed), hp(_hp),
+        bounds(_bounds), generator(_generator), damage(0), vic(0),
+        max_vertices(_graph->getVertices()),max_edges(maxedges()),
+        actual_edges(count_edges()),cost(initial_cost()),
+        distribution(0, max_vertices-1) {
+    }
+
+    void get_injured(std::shared_ptr<Player> best){
+        damage++;
+        if(damage > hp){
+            respawn(best);
+            return;
         }
+        int percent = 1;
+        closer(percent, best);
+        actual_edges = count_edges();
+    }
 
-        void get_injured(std::shared_ptr<Player> best){
-            damage++;
-            if(damage > hp){
-                respawn(best);
-                return;
+    std::shared_ptr<std::unordered_set<int>> get_subset(){
+        return subset;
+    }
+
+private:
+
+    //respawn a player closer to the best in the match
+    void respawn(std::shared_ptr<Player> best){
+        std::uniform_int_distribution<int> clone(0,99);
+        int percent = clone(generator)*vertices/100;
+        init_subset();
+        closer(percent, best);
+        actual_edges = count_edges();
+    }
+
+    void closer(int n, std::shared_ptr<Player> best){
+        std::shared_ptr<std::unordered_set<int>> inserted;
+        std::shared_ptr<std::unordered_set<int>> best_subset
+            = best->get_subset();
+
+        int new_elements = insert(n, best_subset, inserted);
+        erase_new(new_elements, inserted);
+    }
+
+    int insert(int p, std::shared_ptr<std::unordered_set<int>> bss,
+               std::shared_ptr<std::unordered_set<int>> inserted){
+        int new_elements = 0;
+        auto it = bss->begin();
+        for (int i = 0; i < p && it != bss->end(); ++i, ++it) {
+            auto itt = subset->find(*it);
+            if(itt == subset->end())
+                new_elements++;
+            subset->insert(*it);
+            inserted->insert(*it);
+        }
+        return new_elements;
+    }
+
+    void erase_new(int new_elements,
+                   std::shared_ptr<std::unordered_set<int>> inserted){
+        auto it = subset->begin();
+        int erased = 0;
+        while(erased < new_elements){
+            int e = *it;
+            auto itt = inserted->find(e);
+
+            if (itt != inserted->end()){
+                ++it;
+                continue;
             }
-            std::uniform_int_distribution<int> clone(0,99);
-            int percent = clone(generator)/vertices;
-            int c = 0;
-            std::shared_ptr<std::set<int>> iused;
-            while(c < percent){
-                int indexE = -1;
-                int indexI = -1;
-
-                do {
-                    indexE = distribution(generator);
-                } while (subset.find(indexE) == subset.end());
-
-                do {
-                    indexI = distribution(generator);
-                } while (subset.find(indexI) != subset.end());
-
-                subset.erase(indexE);
-                subset.insert(indexI);
-            }
-
-            actual_edges = count_edges();
+            subset->erase(e);
+            erased++;
         }
+    }
 
+    //Return the max posible number of edges given the number of vertices
+    int maxedges() {
+        return vertices * (vertices - 1) / 2;
+    }
 
-    private:
-        int maxedges() {
-            return vertices * (vertices - 1) / 2;
-        }
+    //return the initial cost, the difference between the max posible number of edges and
+    //the actual edges in the subgraph
+    double initial_cost() {
+        return max_edges - actual_edges;
+    }
 
-        double initial_cost() {
-            return max_edges - actual_edges;
-        }
+    void wipe(){
+        subset->clear();
+    }
 
-        void respawn(std::shared_ptr<Player> best){
-            init_subset();
-            actual_edges = count_edges();
-        }
-
-        int count_edges(){
-            int e = 0;
-            for (std::set<int>::iterator it = subset.begin(); it != subset.end(); ++it) {
-                for (std::set<int>::iterator it2 = it; it2 != subset.end(); ++it) {
-                    if(graph->get_edge(*it, *it2) == 1)
-                        e++;
-                }
-            }
-            return e;
-        }
-
-        void init_subset() {
-            int c = 0;
-            while(c < vertices){
-                int i = distribution(generator);
-                if(subset.find(i) == subset.end()){
-                    c++;
-                    subset.insert(i);
-                }
-
+    //count the actual number of edges in the subgraph
+    int count_edges(){
+        int e = 0;
+        for (std::unordered_set<int>::iterator it = subset->begin(); it != subset->end(); ++it) {
+            for (std::unordered_set<int>::iterator it2 = it; it2 != subset->end(); ++it) {
+                if(graph->get_edge(*it, *it2) == 1)
+                    e++;
             }
         }
+        return e;
+    }
+
+
+    void init_subset() {
+        int c = 0;
+        while(c < vertices){
+            int i = -1;
+            do {
+                i = distribution(generator);
+            } while (bounds->find(i) == bounds->end());
+
+            if(subset->find(i) == subset->end()){
+                c++;
+                subset->insert(i);
+            }
+
+        }
+    }
 };

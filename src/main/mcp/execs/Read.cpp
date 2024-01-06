@@ -15,15 +15,15 @@ int main(int argc, char* argv[]) {
 
 
     if (!graph6String.empty()) {
-        const Graph graph(graph6String);
+        std::shared_ptr<Graph> graph = std::make_shared<Graph>(graph6String);
 
-        std::cout << "Vertices: " << graph.getVertices() << std::endl;
+        std::cout << "Vertices: " << graph->getVertices() << std::endl;
         std::cout << "Adjacency Matrix:" << std::endl;
 
-        const int* adjMatrix = graph.getAdjMatrix();
-        for (int i = 0; i < graph.getVertices(); i++) {
-            for (int j = 0; j < graph.getVertices(); j++) {
-                std::cout << adjMatrix[i * graph.getVertices() + j] << " ";
+        std::shared_ptr<int[]> adjMatrix = graph->getAdjMatrix();
+        for (int i = 0; i < graph->getVertices(); i++) {
+            for (int j = 0; j < graph->getVertices(); j++) {
+                std::cout << adjMatrix[i * graph->getVertices() + j] << " ";
             }
             std::cout << std::endl;
         }

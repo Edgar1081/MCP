@@ -35,6 +35,7 @@
 debug
 release
 build
+*.g6
 *.txt
 *.py
 *.jpg

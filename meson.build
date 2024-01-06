@@ -1,16 +1,17 @@
 project('Subset Sum Problem', 'cpp',
   version : '0.9')
 
-# sqlite_dep = dependency('sqlite3')
-# draw_dep = dependency('libxml-2.0', required: true)
-
-# Main executable
-# solve = ['src/main/execs/SSP.cpp']
-# executable('solve', solve, c_args : ['-g'])
-
 # Read executable
-read = ['src/main/mcp/execs/Read.cpp']
-executable('read', read, c_args : ['-g'])
+readfile = ['src/main/mcp/execs/Read.cpp']
+executable('read', readfile, c_args : ['-g'])
+
+#Solve
+solvefile = ['src/main/mcp/execs/Solve.cpp']
+executable('solve', solvefile, c_args : ['-g'])
+
+# Generate random executable
+genfile = ['src/main/mcp/execs/GenG6.cpp']
+executable('gen', genfile, c_args : ['-g'])
 
 # Eval a sol
 # eval = ['src/main/ssp/execs/Eval.cpp']
@@ -41,6 +42,3 @@ executable('read', read, c_args : ['-g'])
 # runfile = ['src/main//execs/Create_sols.cpp']
 # executable('run', runfile, dependencies : [sqlite_dep], c_args : ['-g'])
 
-# #Solve
-# solvefile = ['src/main//execs/Solve.cpp']
-# executable('solve', solvefile, dependencies : [sqlite_dep], c_args : ['-g'])
