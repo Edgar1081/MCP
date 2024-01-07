@@ -61,12 +61,10 @@ public:
 private:
 
     void code_adjMatrix(){
-        int index = 0;
         bits = "";
         for (int j = 1; j < vertices; j++) {
             for (int i = 0; i < j; i++) {
                 bits += std::to_string(adjMatrix[i*vertices + j]);
-                index++;
             }
         }
 
@@ -98,12 +96,12 @@ private:
 
     std::string code_grande(){
         std::bitset<18> binary_vertices(vertices);
-        int p1 = static_cast<int>(get_range(0,6, binary_vertices).to_ulong());
-        int p2 = static_cast<int>(get_range(6,12, binary_vertices).to_ulong());
-        int p3 = static_cast<int>(get_range(12,18, binary_vertices).to_ulong());
-        char c1 = '0' + (p1+63);
-        char c2 = '0' + (p2+63);
-        char c3 = '0' + (p3+63);
+        int p1 = static_cast<int>(get_range(12,17, binary_vertices).to_ulong());
+        int p2 = static_cast<int>(get_range(6,11, binary_vertices).to_ulong());
+        int p3 = static_cast<int>(get_range(0,5, binary_vertices).to_ulong());
+        char c1 = (p1+63);
+        char c2 = (p2+63);
+        char c3 = (p3+63);
 
         std::string vertices_code = "~";
         vertices_code.append(1, c1);

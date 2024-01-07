@@ -22,29 +22,23 @@ int main(int argc, char* argv[]) {
     std::shared_ptr<Graph> graph = std::make_shared<Graph>(graph6String);
 
     std::cout << "Vertices: " << graph->getVertices() << std::endl;
-    std::cout << "Adjacency Matrix:" << std::endl;
-
-    std::shared_ptr<int[]> adjMatrix = graph->getAdjMatrix();
-    for (int i = 0; i < graph->getVertices(); i++) {
-        for (int j = 0; j < graph->getVertices(); j++) {
-            std::cout << adjMatrix[i * graph->getVertices() + j] << " ";
-        }
-        std::cout << std::endl;
-    }
 
     int vertices = graph->getVertices();
     std::shared_ptr<double []> probs(new double [vertices]);
     for (int i = 0; i < vertices; ++i) {
-        probs[i] = 100.0/vertices;
+        probs[i] = 1.0/vertices;
     }
-    std::shared_ptr<std::discrete_distribution<int>> avail(
-                                                           new std::discrete_distribution<int>(probs.get(), probs.get() + vertices));
-    std::shared_ptr<BRO> bro = std::make_shared<BRO>(123,vertices-50,50,3,graph, avail, probs);
+    std::shared_ptr<BRO> bro = std::make_shared<BRO>(123,25,15,3,graph, probs);
 
-    bro->print_sets();
 
+
+    std::cout << bro->get_cost() << std::endl;
+     bro->print_sets();
+
+    std::cout << "PLAY" << std::endl;
     bro->play();
-    bro->print_sets();
 
+    std::cout << bro->get_cost() << std::endl;
+    bro->print_sets();
     return 0;
 }

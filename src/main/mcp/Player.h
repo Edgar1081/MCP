@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <random>
 #include "Graph.h"
+#include "Dist.h"
 
 class Player {
 private:
@@ -17,7 +18,7 @@ private:
     int seed;
     int hp;
     std::shared_ptr<std::unordered_set<int>> subset;
-    std::shared_ptr<std::discrete_distribution<int>> avail;
+    std::shared_ptr<Dist> avail;
     std::shared_ptr<double []> probs;
     std::mt19937 generator;
     int damage;
@@ -27,13 +28,14 @@ private:
     int actual_edges;
     double cost;
     std::uniform_int_distribution<int> distribution;
+    std::unordered_set<int>::iterator setIterator;
 
 public:
     Player(std::shared_ptr<Graph> _graph, int _vertices, int _seed,
-           int _hp, std::shared_ptr<std::discrete_distribution<int>> _avail,
+           int _hp, std::shared_ptr<Dist> _avail,
            std::shared_ptr<double []> _probs) :
         graph(_graph), vertices(_vertices), seed(_seed), hp(_hp),
-        avail(_avail),probs(_probs), generator(_seed){
+        avail(_avail),probs(_probs), generator(seed){
         damage = 0;
         vic = 0;
         max_vertices = graph->getVertices();
@@ -42,6 +44,11 @@ public:
         actual_edges = count_edges();
         cost = initial_cost();
         distribution = std::uniform_int_distribution<int>(0, max_vertices-1);
+        setIterator = subset->begin();
+    }
+
+    void update_distribution(const std::shared_ptr<Dist>& distWrapper) {
+        avail = distWrapper;
     }
 
     int get_damage(){
@@ -52,7 +59,6 @@ public:
         std::cout << "seed : " << seed << " COST: " << cost << std::endl;
         std::vector<int> orderedSubset(subset->begin(), subset->end());
 
-        // Sort the vector if you want the elements in a specific order
         std::sort(orderedSubset.begin(), orderedSubset.end());
 
         for (const auto& element : orderedSubset) {
@@ -94,11 +100,9 @@ public:
     }
 
     int get_random_vertex(){
-        int i = -1;
-        do {
-            i = distribution(generator);
-        } while (subset->find(i) != subset->end());
-        return i;
+        if (setIterator != subset->end())
+            setIterator = subset->begin();
+        return *setIterator;
     }
 
 private:
@@ -187,14 +191,12 @@ private:
         subset = std::make_shared<std::unordered_set<int>>();
         int c = 0;
         while(c < vertices){
-            int i = -1;
-            i = (*avail)(generator);
-
-            if(subset->find(i) == subset->end()){
+            int sample = -1;
+            sample = (*avail)(generator);
+            if(subset->find(sample) == subset->end()){
                 c++;
-                subset->insert(i);
+                subset->insert(sample);
             }
-
         }
     }
 };

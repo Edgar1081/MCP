@@ -7,6 +7,7 @@
 #include <set>
 #include "Graph.h"
 #include "Player.h"
+#include "Dist.h"
 
 class BRO{
 private:
@@ -16,23 +17,25 @@ private:
     int n_players;
     int hp;
     std::shared_ptr<Graph> graph;
-    std::shared_ptr<std::discrete_distribution<int>> avail;
+    std::shared_ptr<Dist> avail;
     std::shared_ptr<double []> probs;
     std::shared_ptr<Player>* players;
     std::mt19937 gen;
     int best_index;
-    int worst_index;
+    int area;
 
 public:
     BRO(int _seed, int _vertices, int _n_players, int _hp,
-        std::shared_ptr<Graph> _graph, std::shared_ptr<std::discrete_distribution<int>> _avail,
+        std::shared_ptr<Graph> _graph,
         std::shared_ptr<double[]> _probs) :
         seed(_seed), vertices(_vertices), max_vertices(_graph->getVertices()),
-        n_players(_n_players),hp(_hp), graph(_graph), avail(_avail), probs(_probs){
+        n_players(_n_players),hp(_hp), graph(_graph), probs(_probs){
         gen.seed(seed);
+        avail = std::make_shared<Dist>(probs, max_vertices);
         players = new std::shared_ptr<Player>[n_players];
         init_match();
         set_best();
+        area = vertices;
     }
 
     void print_sets(){
@@ -41,6 +44,10 @@ public:
             players[i]->print_set();
             std::cout << std::endl;
         }
+    }
+
+    int get_cost(){
+        return players[best_index]->get_cost();
     }
 
     void play(){
@@ -54,28 +61,30 @@ public:
         }
 
         int c = 0;
-        //while(players[best_index]->get_cost() != 0){
-        while(c < 100000){
-            // std::cout << "~~~" << std::endl;
-            // std::cout << "DAMAGE: " <<
-            //     players[best_index]->get_damage() << std::endl;
+        while(c < 10000 && players[best_index]->get_cost() != 0){
             shoot_closer();
-            set_best();
-            int i = players[best_index]->get_random_vertex();
-            int j = i;
-            while(i != j){
-                j = players[best_index]->get_random_vertex();
-            }
-            update_probs(i, probs[i]+0.1);
-            update_probs(j, probs[i]+0.1);
-            // std::cout << best_index << ": " << players[best_index]->get_cost() << std::endl;
-            // std::cout << "last" << ": " << players[n_players-1]->get_cost() << std::endl;
+            new_probs();
             c++;
         }
-            std::cout << "~~~" << std::endl;
     }
 
 private:
+
+    void new_probs() {
+        int c = 0;
+        while (c < area) {
+            int i = players[best_index]->get_random_vertex();
+            avail->update(i, probs[i] + 0.01);
+            c++;
+        }
+
+
+        for (int i = 0; i < n_players; ++i) {
+            players[i]->update_distribution(avail);
+        }
+
+        area = area / 2;
+    }
 
     void init_match(){
         for(int i = 0; i < n_players; i++){
@@ -110,10 +119,15 @@ private:
                     closer = j;
                 }
             }
-            // std::cout << "I: " << i << " C: " << closer
-            //           << " D: " << d << std::endl;
-            players[i]->shoot();
-            players[closer]->get_injured(players[best_index]);
+            if(players[i]->get_cost() < players[closer]->get_cost()){
+                players[i]->shoot();
+                players[closer]->get_injured(players[best_index]);
+            }
+            else if (players[i]->get_cost() > players[closer]->get_cost()) {
+                players[closer]->shoot();
+                players[i]->get_injured(players[best_index]);
+            }
+            set_best();
         }
     }
 
@@ -156,12 +170,6 @@ private:
 
         double distance =1.0 - static_cast<double>(inter.size()) / uni.size();
         return distance;
-    }
-
-    void update_probs(int index, double new_prob){
-        probs[index] = new_prob;
-        (*avail).param(std::discrete_distribution<int>::param_type
-                           (probs.get(), probs.get()+max_vertices));
     }
 
 };
