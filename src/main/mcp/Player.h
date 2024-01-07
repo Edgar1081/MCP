@@ -17,9 +17,9 @@ private:
     int seed;
     int hp;
     std::shared_ptr<std::unordered_set<int>> subset;
-    std::mt19937 generator;
-    std::discrete_distribution<int> avail;
+    std::shared_ptr<std::discrete_distribution<int>> avail;
     std::shared_ptr<double []> probs;
+    std::mt19937 generator;
     int damage;
     int vic;
     int max_vertices;
@@ -30,14 +30,35 @@ private:
 
 public:
     Player(std::shared_ptr<Graph> _graph, int _vertices, int _seed,
-           int _hp,std::discrete_distribution<int> _avail,
+           int _hp, std::shared_ptr<std::discrete_distribution<int>> _avail,
            std::shared_ptr<double []> _probs) :
         graph(_graph), vertices(_vertices), seed(_seed), hp(_hp),
-        avail(_avail),probs(_probs), damage(0),vic(0),
-        max_vertices(_graph->getVertices()),max_edges(maxedges()),
-        actual_edges(count_edges()),cost(initial_cost()),
-        distribution(0, max_vertices-1) {
-        generator.seed(seed);
+        avail(_avail),probs(_probs), generator(_seed){
+        damage = 0;
+        vic = 0;
+        max_vertices = graph->getVertices();
+        max_edges = maxedges();
+        init_subset();
+        actual_edges = count_edges();
+        cost = initial_cost();
+        distribution = std::uniform_int_distribution<int>(0, max_vertices-1);
+    }
+
+    int get_damage(){
+        return damage;
+    }
+
+    void print_set(){
+        std::cout << "seed : " << seed << " COST: " << cost << std::endl;
+        std::vector<int> orderedSubset(subset->begin(), subset->end());
+
+        // Sort the vector if you want the elements in a specific order
+        std::sort(orderedSubset.begin(), orderedSubset.end());
+
+        for (const auto& element : orderedSubset) {
+            std::cout << element << " ";
+        }
+        std::cout << std::endl;
     }
 
     double get_prob(int index){
@@ -62,21 +83,22 @@ public:
             respawn(best);
             return;
         }
-        int percent = 1;
+        int percent = 2;
         closer(percent, best);
         actual_edges = count_edges();
+        cost = initial_cost();
     }
 
     std::shared_ptr<std::unordered_set<int>> get_subset(){
         return subset;
     }
 
-    int get_random_vetex(){
+    int get_random_vertex(){
         int i = -1;
         do {
             i = distribution(generator);
         } while (subset->find(i) != subset->end());
-        return -1;
+        return i;
     }
 
 private:
@@ -93,7 +115,8 @@ private:
     }
 
     void closer(int n, std::shared_ptr<Player> best){
-        std::shared_ptr<std::unordered_set<int>> inserted;
+        std::shared_ptr<std::unordered_set<int>> inserted =
+            std::make_shared<std::unordered_set<int>>();
         std::shared_ptr<std::unordered_set<int>> best_subset
             = best->get_subset();
 
@@ -127,6 +150,7 @@ private:
                 ++it;
                 continue;
             }
+            ++it;
             subset->erase(e);
             erased++;
         }
@@ -151,7 +175,7 @@ private:
     int count_edges(){
         int e = 0;
         for (std::unordered_set<int>::iterator it = subset->begin(); it != subset->end(); ++it) {
-            for (std::unordered_set<int>::iterator it2 = it; it2 != subset->end(); ++it) {
+            for (std::unordered_set<int>::iterator it2 = it; it2 != subset->end(); ++it2) {
                 if(graph->get_edge(*it, *it2) == 1)
                     e++;
             }
@@ -159,12 +183,12 @@ private:
         return e;
     }
 
-
     void init_subset() {
+        subset = std::make_shared<std::unordered_set<int>>();
         int c = 0;
         while(c < vertices){
             int i = -1;
-            i = avail(generator);
+            i = (*avail)(generator);
 
             if(subset->find(i) == subset->end()){
                 c++;
