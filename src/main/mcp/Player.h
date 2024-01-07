@@ -17,8 +17,9 @@ private:
     int seed;
     int hp;
     std::shared_ptr<std::unordered_set<int>> subset;
-    std::shared_ptr<std::unordered_set<int>> bounds;
     std::mt19937 generator;
+    std::discrete_distribution<int> avail;
+    std::shared_ptr<double []> probs;
     int damage;
     int vic;
     int max_vertices;
@@ -28,13 +29,31 @@ private:
     std::uniform_int_distribution<int> distribution;
 
 public:
-    Player(std::shared_ptr<Graph> _graph, int _vertices, int _seed, int _hp,
-    std::shared_ptr<std::unordered_set<int>> _bounds, std::mt19937 _generator) :
+    Player(std::shared_ptr<Graph> _graph, int _vertices, int _seed,
+           int _hp,std::discrete_distribution<int> _avail,
+           std::shared_ptr<double []> _probs) :
         graph(_graph), vertices(_vertices), seed(_seed), hp(_hp),
-        bounds(_bounds), generator(_generator), damage(0), vic(0),
+        avail(_avail),probs(_probs), damage(0),vic(0),
         max_vertices(_graph->getVertices()),max_edges(maxedges()),
         actual_edges(count_edges()),cost(initial_cost()),
         distribution(0, max_vertices-1) {
+        generator.seed(seed);
+    }
+
+    double get_prob(int index){
+        return probs[index];
+    }
+
+    void shoot(){
+        vic++;
+    }
+
+    int get_wins(){
+        return vic;
+    }
+
+    int get_cost(){
+        return cost;
     }
 
     void get_injured(std::shared_ptr<Player> best){
@@ -52,10 +71,20 @@ public:
         return subset;
     }
 
+    int get_random_vetex(){
+        int i = -1;
+        do {
+            i = distribution(generator);
+        } while (subset->find(i) != subset->end());
+        return -1;
+    }
+
 private:
 
     //respawn a player closer to the best in the match
     void respawn(std::shared_ptr<Player> best){
+        vic = 0;
+        damage = 0;
         std::uniform_int_distribution<int> clone(0,99);
         int percent = clone(generator)*vertices/100;
         init_subset();
@@ -135,9 +164,7 @@ private:
         int c = 0;
         while(c < vertices){
             int i = -1;
-            do {
-                i = distribution(generator);
-            } while (bounds->find(i) == bounds->end());
+            i = avail(generator);
 
             if(subset->find(i) == subset->end()){
                 c++;
