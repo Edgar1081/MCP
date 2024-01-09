@@ -8,6 +8,7 @@
 #include "../Graph.h"
 #include "../IO.h"
 #include "../BRO.h"
+#include "../Player.h"
 
 int main(int argc, char* argv[]) {
     int seed = 0;
@@ -65,18 +66,21 @@ int main(int argc, char* argv[]) {
     std::shared_ptr<BRO> bro =
         std::make_shared<BRO>(seed, verticesToSearch, numPlayers, hp, graph, probs);
 
-    std::cout << "BEST: "<< bro->get_best_index() << " " <<bro->get_cost() << std::endl;
+    std::shared_ptr<Dist> a = std::make_shared<Dist>(probs, 10);
 
-    bro->print_distances(0);
-    //bro->print_sets();
-    std::cout << "-------------PLAY------------" << std::endl;
+    std::shared_ptr<Player> p = std::make_shared<Player>(graph, 8, 0, hp, a, probs);
 
-    bro->play();
 
-    //bro->print_sets();
-    std::cout << "BEST: "<< bro->get_best_index() << " " <<bro->get_cost() << std::endl;
-    //bro->print_probs();
-    bro->print_distances(bro->get_best_index());
-    bro->print_probs();
+    int inserted = p->insert_one(7,1);
+
+    std::cout << "INSERTED----" << std::endl;
+    std::cout << "COST: " << p->get_cost()
+              << "; Inserted: " << inserted << std::endl;
+
+    int erased = p->erase_one(6, 0);
+
+    std::cout << "ERASED------" << std::endl;
+    std::cout << "COST: " << p->get_cost()
+              << "; Erased: " << erased << std::endl;
     return 0;
 }

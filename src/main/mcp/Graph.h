@@ -31,6 +31,10 @@ public:
         graph6 += letters;
     }
 
+    int bits_len(){
+        return bits.size();
+    }
+
     int getVertices() const {
         return vertices;
     }

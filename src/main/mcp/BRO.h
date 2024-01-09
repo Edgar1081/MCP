@@ -34,13 +34,13 @@ public:
         avail = std::make_shared<Dist>(probs, max_vertices);
         players = new std::shared_ptr<Player>[n_players];
         init_match();
+        best_index = 0;
         set_best();
         area = vertices;
     }
 
     void print_sets(){
         for(int i = 0; i< n_players; i++){
-            std::cout << "Player: " << i << std::endl;
             players[i]->print_set();
             std::cout << std::endl;
         }
@@ -51,60 +51,45 @@ public:
     }
 
     void play(){
-        if(vertices == max_vertices){
-            int etarget = vertices*(vertices-1)/2;
-            int act = players[best_index]->get_cost();
-            if(etarget == act)
-                return;
-            else
-                return;
-        }
-
         int c = 0;
         while(c < 10000 && players[best_index]->get_cost() != 0){
+            int prev = best_index;
             shoot_closer();
-            new_probs();
+            if(prev != best_index){
+                new_probs();
+                std::cout << "PROBS " << std::endl;
+            }
             c++;
+            std::cout << players[best_index]->get_cost() << std::endl;
         }
+    }
+
+    void print_probs(){
+        for(int i = 0; i < max_vertices; i++)
+            if(probs[i] > 0.01)
+                std::cout << i << "(" << probs[i] << ")" << " ";
+        std::cout << std::endl;
+        avail->print_probs();
+    }
+
+    void print_distances(int i){
+        for(int j = 0; j < n_players; j++){
+            double d = distance(i,j);
+            std::cout << "D: "
+                      << i << "---" << j << " " << d << std::endl;
+        }
+    }
+
+    void atack(int i, int j){
+        players[i]->shoot();
+        players[j]->get_injured(players[best_index]);
+    }
+
+    int get_best_index(){
+        return best_index;
     }
 
 private:
-
-    void new_probs() {
-        int c = 0;
-        while (c < area) {
-            int i = players[best_index]->get_random_vertex();
-            avail->update(i, probs[i] + 0.01);
-            c++;
-        }
-
-
-        for (int i = 0; i < n_players; ++i) {
-            players[i]->update_distribution(avail);
-        }
-
-        area = area / 2;
-    }
-
-    void init_match(){
-        for(int i = 0; i < n_players; i++){
-            players[i] =
-                std::make_shared<Player>(graph, vertices, i, hp, avail, probs);
-        }
-    }
-
-    void set_best(){
-        int best_index_i = -1;
-        int c = vertices*(vertices-1)/2;
-        for(int i =0; i < n_players; i++){
-            double f = players[i]->get_cost();
-            if(f < c){
-                best_index_i = i;
-                c = f;
-            }
-        }
-        best_index = best_index_i;
-    }
 
     void shoot_closer(){
         for(int i = 0; i < n_players; i++){
@@ -119,15 +104,60 @@ private:
                     closer = j;
                 }
             }
-            if(players[i]->get_cost() < players[closer]->get_cost()){
-                players[i]->shoot();
-                players[closer]->get_injured(players[best_index]);
+            if(players[i]->get_cost() < players[closer]->get_cost())
+                atack(i,closer);
+            else
+                atack(closer,i);
+
+            if(players[closer]->get_cost() < players[best_index]->get_cost()){
+                int prev = best_index;
+                best_index = closer;
+                std::cout << "BEST_UPDATED: " << prev << "--------->" << best_index<< std::endl;
             }
-            else if (players[i]->get_cost() > players[closer]->get_cost()) {
-                players[closer]->shoot();
-                players[i]->get_injured(players[best_index]);
+            if(players[i]->get_cost() < players[best_index]->get_cost()){
+                int prev = best_index;
+                best_index = i;
+                std::cout << "BEST_UPDATED: " << prev << "---------->" << best_index<< std::endl;
             }
-            set_best();
+
+        }
+    }
+
+    void set_best(){
+        int prev = best_index;
+        int best_index_i_ = best_index;
+        int c = players[best_index]->get_cost();
+        for(int i =0; i < n_players; i++){
+            double f = players[i]->get_cost();
+            if(f < c){
+                best_index_i_ = i;
+                c = f;
+            }
+        }
+        best_index = best_index_i_;
+        if(prev != best_index)
+            std::cout << "BEST_UPDATED: " << prev << "-->" << best_index<< std::endl;
+    }
+
+    void new_probs() {
+        int c = 0;
+        while (c < area) {
+            int i = players[best_index]->get_random_vertex();
+            probs[i] += 1;
+            c++;
+        }
+
+        avail = std::make_shared<Dist>(probs, max_vertices);
+        for (int i = 0; i < n_players; ++i) {
+            players[i]->update_distribution(avail);
+        }
+        area = area *.99;
+    }
+
+    void init_match(){
+        for(int i = 0; i < n_players; i++){
+            players[i] =
+                std::make_shared<Player>(graph, vertices, i, hp, avail, probs);
         }
     }
 
@@ -137,39 +167,22 @@ private:
         std::shared_ptr<std::unordered_set<int>> setB
             = players[b]->get_subset();
         return jaccard_distance(setA,setB);
-        //return hamming_distance(setA,setB);
-    }
-
-    int hamming_distance(
-        std::shared_ptr<std::unordered_set<int>>& A,
-        std::shared_ptr<std::unordered_set<int>>& B){
-
-        std::bitset<500> bitset1, bitset2;
-
-        for (int elem : *A) {
-            bitset1.set(elem);
-        }
-
-        for (int elem : *B) {
-            bitset2.set(elem);
-        }
-
-        std::bitset<500> xorResult = bitset1 ^ bitset2;
-        return xorResult.count();
     }
 
     double jaccard_distance(
-        std::shared_ptr<std::unordered_set<int>> A,
-        std::shared_ptr<std::unordered_set<int>> B){
-        std::unordered_set<int> uni, inter;
-        std::set_union(A->begin(), A->end(), B->begin(), B->end(),
+                            std::shared_ptr<std::unordered_set<int>> A,
+                            std::shared_ptr<std::unordered_set<int>> B) {
+
+        std::set<int> OA(A->begin(), A->end());
+        std::set<int> OB(B->begin(), B->end());
+        std::set<int> uni;
+        std::set<int>inter;
+        //1 - |(A ^ B)|/|(A u B)|
+        std::set_union(OA.begin(), OA.end(), OB.begin(), OB.end(),
                        std::inserter(uni, uni.begin()));
-
-        std::set_intersection(A->begin(), A->end(), B->begin(), B->end()
-                              , std::inserter(inter, inter.begin()));
-
-        double distance =1.0 - static_cast<double>(inter.size()) / uni.size();
+        std::set_intersection(OA.begin(), OA.end(), OB.begin(), OB.end(),
+                              std::inserter(inter, inter.begin()));
+        double distance = 1.0 - static_cast<double>(inter.size()) / uni.size();
         return distance;
     }
-
 };
