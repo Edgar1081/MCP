@@ -49,12 +49,26 @@ public:
         distribution = std::uniform_int_distribution<int>(0, max_vertices-1);
     }
 
+    ~Player() {
+        subset.reset();
+    }
+
+    std::shared_ptr<Player> clone() const {
+        auto clonedPlayer = std::make_shared<Player>(*this);  // Use copy constructor
+        clonedPlayer->subset = std::make_shared<std::unordered_set<int>>(*subset);
+        return clonedPlayer;
+    }
+
     void update_distribution(const std::shared_ptr<Dist>& distWrapper) {
         avail = distWrapper;
     }
 
     int get_damage(){
         return damage;
+    }
+
+    int get_vertices(){
+        return vertices;
     }
 
     void print_set(){
@@ -103,7 +117,6 @@ public:
     }
 
     int get_random_vertex() {
-
         std::uniform_int_distribution<int> p(0, subset->size() - 1);
         int steps = p(generator);
 
@@ -124,7 +137,6 @@ public:
         erased->insert(m);
         prev_subset = std::make_shared<std::unordered_set<int>>(*subset);
         recal_rem(erased);
-        //actual_edges = count_edges();
         return r;
     }
 
@@ -137,10 +149,8 @@ public:
         inserted->insert(j);
         recal_ins(inserted);
         prev_subset = std::make_shared<std::unordered_set<int>>(*subset);
-        //actual_edges = count_edges();
         return i;
     }
-
 
     int erase_one(){
         auto it = subset->begin();
@@ -155,6 +165,7 @@ public:
         return r;
     }
 private:
+
     void closer(int n, std::shared_ptr<Player> best){
 
         std::shared_ptr<std::unordered_set<int>> inserted =
@@ -285,7 +296,6 @@ private:
     }
     //respawn a player closer to the best in the match
     void respawn(std::shared_ptr<Player> best){
-        std::cout << index << " RESPAWN~" << std::endl;
         vic = 0;
         damage = 0;
         // std::uniform_int_distribution<int> clone(0,99);
@@ -297,4 +307,5 @@ private:
         cost = initial_cost();
         // closer(percent, best);
     }
+
 };

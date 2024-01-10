@@ -13,13 +13,17 @@ executable('solve', solvefile, c_args : ['-g'])
 genfile = ['src/main/mcp/execs/GenG6.cpp']
 executable('gen', genfile, c_args : ['-g'])
 
+# Gen K graph
+genkfile = ['src/main/mcp/execs/GenKG6.cpp']
+executable('genk', genkfile, c_args : ['-g'])
+
 #Insert
 insertfile = ['src/main/mcp/execs/Insert.cpp']
 executable('insert', insertfile, c_args : ['-g'])
 
-# Eval a sol
-# eval = ['src/main/ssp/execs/Eval.cpp']
-# executable('eval', eval, c_args : ['-g'])
+# RUN
+runfile = ['src/main/mcp/execs/Run.cpp']
+executable('run', runfile, c_args : ['-g'])
 
 # Prints full list of massses
 # populate = ['src/main/ssp/execs/Populate.cpp']

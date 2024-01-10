@@ -7,23 +7,25 @@
 #include <unistd.h>
 #include "../Graph.h"
 #include "../IO.h"
-#include "../Game.h"
+#include "../BR.h"  // Include the necessary header for the BR class
 
 int main(int argc, char* argv[]) {
     int seed = 0;
-    int verticesToSearch = 0;
+    int cycles = 0;
     int numPlayers = 0;
     int hp = 0;
+    double e = 0;
+    double p = 0;
     std::string filename;
 
     int opt;
-    while ((opt = getopt(argc, argv, "s:a:n:h:f:")) != -1) {
+    while ((opt = getopt(argc, argv, "s:c:n:h:e:p:f:")) != -1) {
         switch (opt) {
             case 's':
                 seed = std::stoi(optarg);
                 break;
-            case 'a':
-                verticesToSearch = std::stoi(optarg);
+            case 'c':
+                cycles = std::stoi(optarg);
                 break;
             case 'n':
                 numPlayers = std::stoi(optarg);
@@ -31,17 +33,23 @@ int main(int argc, char* argv[]) {
             case 'h':
                 hp = std::stoi(optarg);
                 break;
+            case 'e':
+                e = std::stod(optarg);
+                break;
+            case 'p':
+                p = std::stod(optarg);
+                break;
             case 'f':
                 filename = optarg;
                 break;
             default:
-                std::cerr << "Usage: " << argv[0] << " -s <seed> -a <vertices_to_search> -n <num_players> -h <hp> -f <filename.g6>" << std::endl;
+                std::cerr << "Usage: " << argv[0] << " -s <seed> -c <cycles> -n <num_players> -h <hp> -e <epsilon> -p <probability> -f <filename.g6>" << std::endl;
                 return 1;
         }
     }
 
     if (filename.empty()) {
-        std::cerr << "Usage: " << argv[0] << " -s <seed> -a <vertices_to_search> -n <num_players> -h <hp> -f <filename.g6>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " -s <seed> -c <cycles> -n <num_players> -h <hp> -e <epsilon> -p <probability> -f <filename.g6>" << std::endl;
         return 1;
     }
 
@@ -55,22 +63,11 @@ int main(int argc, char* argv[]) {
 
     std::shared_ptr<Graph> graph = std::make_shared<Graph>(graph6String);
 
+    // Create BR class using provided parameters
+    BR br(seed, numPlayers, hp, graph, e, cycles, p);
 
-    std::shared_ptr<Game> game =
-        std::make_shared<Game>(seed, verticesToSearch, numPlayers, hp, graph, .99, 10000, .02);
+    // Call the solve method
+    br.solve();
 
-    std::cout << "BEST: "<< game->get_best_index() << " " <<game->get_cost() << std::endl;
-
-    game->print_distances(0);
-    //game->print_sets();
-    std::cout << "-------------PLAY------------" << std::endl;
-
-    game->play(true);
-
-    //game->print_sets();
-    std::cout << "BEST: "<< game->get_best_index() << " " <<game->get_cost() << std::endl;
-    //game->print_probs();
-    game->print_distances(game->get_best_index());
-    game->print_probs();
     return 0;
 }

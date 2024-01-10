@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::shared_ptr<Game> game =
-        std::make_shared<Game>(seed, verticesToSearch, numPlayers, hp, graph, probs);
+        std::make_shared<Game>(seed, verticesToSearch, numPlayers, hp, graph, .9, 10000, .0001);
 
     std::shared_ptr<Dist> a = std::make_shared<Dist>(probs, 10);
 

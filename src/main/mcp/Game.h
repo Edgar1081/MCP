@@ -17,30 +17,40 @@ private:
     int n_players;
     int hp;
     std::shared_ptr<Graph> graph;
+    double eps;
+    int cycles;
+    double prob_step;
     std::shared_ptr<Dist> avail;
-    std::shared_ptr<double []> probs;
     std::shared_ptr<Player>* players;
     std::mt19937 gen;
     int best_index;
     int area;
-    double p;
     double radio;
+    std::shared_ptr<double []> probs;
 
 public:
     Game(int _seed, int _vertices, int _n_players, int _hp,
-        std::shared_ptr<Graph> _graph,
-        std::shared_ptr<double[]> _probs) :
+         std::shared_ptr<Graph> _graph, double _eps, int _cycles, double _prob_step) :
         seed(_seed), vertices(_vertices), max_vertices(_graph->getVertices()),
-        n_players(_n_players),hp(_hp), graph(_graph), probs(_probs){
-        gen.seed(seed);
+        n_players(_n_players), hp(_hp), graph(_graph), eps(_eps),
+        cycles(_cycles), prob_step(_prob_step),
+        avail(nullptr),  // Initialize avail to avoid issues
+        players(new std::shared_ptr<Player>[n_players]), gen(_seed),
+        best_index(0), area(_vertices), radio(1),
+        probs(new double[max_vertices]) {
+
+        for (int i = 0; i < max_vertices; ++i) {
+            probs[i] = 1.0 / max_vertices;
+        }
+
         avail = std::make_shared<Dist>(probs, max_vertices);
-        players = new std::shared_ptr<Player>[n_players];
         init_match();
-        best_index = 0;
         set_best();
-        area = vertices/2;
-        p = probs[0]+probs[0];
-        radio = 1;
+    }
+
+
+    ~Game() {
+        delete[] players;
     }
 
     void print_sets(){
@@ -54,17 +64,22 @@ public:
         return players[best_index]->get_cost();
     }
 
-    void play(){
+    std::shared_ptr<Player> play(bool prints){
+        if(vertices == max_vertices)
+            return players[best_index]->clone();
+
         int c = 0;
-        while(c < 10000 && players[best_index]->get_cost() != 0){
+        while(c < cycles && players[best_index]->get_cost() != 0){
             shoot_closer();
             if(c % 50 == 0){
                 new_probs();
-                radio*=.9;
+                radio*=eps;
             }
             c++;
-            std::cout << players[best_index]->get_cost() << std::endl;
+            if(prints)
+                std::cout << players[best_index]->get_cost() << std::endl;
         }
+        return players[best_index]->clone();
     }
 
     void print_probs(){
@@ -149,7 +164,7 @@ private:
         int c = 0;
         while (c < area) {
             int i = players[best_index]->get_random_vertex();
-            probs[i] += p;
+            probs[i] += prob_step;
             c++;
         }
 
@@ -157,7 +172,7 @@ private:
         for (int i = 0; i < n_players; ++i) {
             players[i]->update_distribution(avail);
         }
-        area = area *.99;
+        area *=eps;
     }
 
     void init_match(){
@@ -193,4 +208,5 @@ private:
         double distance = 1.0 - static_cast<double>(inter.size()) / uni.size();
         return distance;
     }
+
 };
