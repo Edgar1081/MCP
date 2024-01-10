@@ -7,7 +7,7 @@
 #include <unistd.h> // for getopt
 #include "../Graph.h"
 #include "../IO.h"
-#include "../BRO.h"
+#include "../Game.h"
 #include "../Player.h"
 
 int main(int argc, char* argv[]) {
@@ -63,12 +63,12 @@ int main(int argc, char* argv[]) {
         probs[i] = 1.0 / max_vertices;
     }
 
-    std::shared_ptr<BRO> bro =
-        std::make_shared<BRO>(seed, verticesToSearch, numPlayers, hp, graph, probs);
+    std::shared_ptr<Game> game =
+        std::make_shared<Game>(seed, verticesToSearch, numPlayers, hp, graph, probs);
 
     std::shared_ptr<Dist> a = std::make_shared<Dist>(probs, 10);
 
-    std::shared_ptr<Player> p = std::make_shared<Player>(graph, 8, 0, hp, a, probs);
+    std::shared_ptr<Player> p = std::make_shared<Player>(0,graph, 8, 0, hp, a, probs);
 
 
     int inserted = p->insert_one(7,1);

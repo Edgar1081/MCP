@@ -9,7 +9,7 @@
 #include "Player.h"
 #include "Dist.h"
 
-class BRO{
+class Game{
 private:
     int seed;
     int vertices;
@@ -23,9 +23,11 @@ private:
     std::mt19937 gen;
     int best_index;
     int area;
+    double p;
+    double radio;
 
 public:
-    BRO(int _seed, int _vertices, int _n_players, int _hp,
+    Game(int _seed, int _vertices, int _n_players, int _hp,
         std::shared_ptr<Graph> _graph,
         std::shared_ptr<double[]> _probs) :
         seed(_seed), vertices(_vertices), max_vertices(_graph->getVertices()),
@@ -36,7 +38,9 @@ public:
         init_match();
         best_index = 0;
         set_best();
-        area = vertices;
+        area = vertices/2;
+        p = probs[0]+probs[0];
+        radio = 1;
     }
 
     void print_sets(){
@@ -53,11 +57,10 @@ public:
     void play(){
         int c = 0;
         while(c < 10000 && players[best_index]->get_cost() != 0){
-            int prev = best_index;
             shoot_closer();
-            if(prev != best_index){
+            if(c % 50 == 0){
                 new_probs();
-                std::cout << "PROBS " << std::endl;
+                radio*=.9;
             }
             c++;
             std::cout << players[best_index]->get_cost() << std::endl;
@@ -66,7 +69,6 @@ public:
 
     void print_probs(){
         for(int i = 0; i < max_vertices; i++)
-            if(probs[i] > 0.01)
                 std::cout << i << "(" << probs[i] << ")" << " ";
         std::cout << std::endl;
         avail->print_probs();
@@ -93,6 +95,9 @@ private:
 
     void shoot_closer(){
         for(int i = 0; i < n_players; i++){
+            double d_best = distance(best_index, i);
+            if(d_best > radio)
+                players[i]->get_injured(players[best_index]);
             double d = std::numeric_limits<double>::max();
             int closer = -1;
             for(int j = 0; j < n_players; j++){
@@ -120,6 +125,7 @@ private:
                 std::cout << "BEST_UPDATED: " << prev << "---------->" << best_index<< std::endl;
             }
 
+
         }
     }
 
@@ -132,8 +138,8 @@ private:
             if(f < c){
                 best_index_i_ = i;
                 c = f;
-            }
         }
+            }
         best_index = best_index_i_;
         if(prev != best_index)
             std::cout << "BEST_UPDATED: " << prev << "-->" << best_index<< std::endl;
@@ -143,7 +149,7 @@ private:
         int c = 0;
         while (c < area) {
             int i = players[best_index]->get_random_vertex();
-            probs[i] += 1;
+            probs[i] += p;
             c++;
         }
 
@@ -155,9 +161,11 @@ private:
     }
 
     void init_match(){
+        std::uniform_int_distribution<int> seedsgen;
         for(int i = 0; i < n_players; i++){
+            int s = seedsgen(gen);
             players[i] =
-                std::make_shared<Player>(graph, vertices, i, hp, avail, probs);
+                std::make_shared<Player>(i,graph, vertices, s, hp, avail, probs);
         }
     }
 
@@ -167,8 +175,8 @@ private:
         std::shared_ptr<std::unordered_set<int>> setB
             = players[b]->get_subset();
         return jaccard_distance(setA,setB);
-    }
 
+    }
     double jaccard_distance(
                             std::shared_ptr<std::unordered_set<int>> A,
                             std::shared_ptr<std::unordered_set<int>> B) {

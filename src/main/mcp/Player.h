@@ -14,6 +14,7 @@
 
 class Player {
 private:
+    int index;
     std::shared_ptr<Graph> graph;
     int vertices;
     int seed;
@@ -32,10 +33,10 @@ private:
     std::uniform_int_distribution<int> distribution;
 
 public:
-    Player(std::shared_ptr<Graph> _graph, int _vertices, int _seed,
+    Player(int _index, std::shared_ptr<Graph> _graph, int _vertices, int _seed,
            int _hp, std::shared_ptr<Dist> _avail,
            std::shared_ptr<double []> _probs) :
-        graph(_graph), vertices(_vertices), seed(_seed), hp(_hp),
+        index(_index),graph(_graph), vertices(_vertices), seed(_seed), hp(_hp),
         avail(_avail),probs(_probs), generator(seed){
         damage = 0;
         vic = 0;
@@ -57,7 +58,7 @@ public:
     }
 
     void print_set(){
-        std::cout << "Player: " << seed << " COST: " << cost <<
+        std::cout << "Player: " << index << " COST: " << cost <<
             " V: " << subset->size() << " v: " << vertices << std::endl;
         std::vector<int> orderedSubset(subset->begin(), subset->end());
 
@@ -86,14 +87,15 @@ public:
         return max_edges-actual_edges;
     }
 
-    void get_injured(std::shared_ptr<Player> best){
+    int get_injured(std::shared_ptr<Player> best){
         damage++;
         if(damage > hp){
             respawn(best);
-            return;
+            return 0;
         }
         int percent = 1;
         closer(percent, best);
+        return 1;
     }
 
     std::shared_ptr<std::unordered_set<int>> get_subset(){
@@ -281,31 +283,9 @@ private:
             }
         }
     }
-
-    // void land(std::shared_ptr<Player> best, int p){
-    //     int c = 0;
-    //     while(c < p){
-    //         int n = best->get_random_vertex();
-    //         if(subset->find(n) == subset->end()){
-    //             c++;
-    //             subset->insert(n);
-    //         }
-
-    //     }
-
-    //     int r = vertices - c;
-    //     while(r < vertices){
-    //         int sample = (*avail)(generator);
-    //         if(subset->find(sample) == subset->end()){
-    //             r++;
-    //             subset->insert(sample);
-    //         }
-    //     }
-    // }
-
     //respawn a player closer to the best in the match
     void respawn(std::shared_ptr<Player> best){
-        std::cout << "RESPAWN~" << std::endl;
+        std::cout << index << " RESPAWN~" << std::endl;
         vic = 0;
         damage = 0;
         // std::uniform_int_distribution<int> clone(0,99);

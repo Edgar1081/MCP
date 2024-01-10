@@ -4,10 +4,10 @@
 #include <algorithm>
 #include <random>
 #include <string>
-#include <unistd.h> // for getopt
+#include <unistd.h>
 #include "../Graph.h"
 #include "../IO.h"
-#include "../BRO.h"
+#include "../Game.h"
 
 int main(int argc, char* argv[]) {
     int seed = 0;
@@ -62,21 +62,21 @@ int main(int argc, char* argv[]) {
         probs[i] = 1.0 / max_vertices;
     }
 
-    std::shared_ptr<BRO> bro =
-        std::make_shared<BRO>(seed, verticesToSearch, numPlayers, hp, graph, probs);
+    std::shared_ptr<Game> game =
+        std::make_shared<Game>(seed, verticesToSearch, numPlayers, hp, graph, probs);
 
-    std::cout << "BEST: "<< bro->get_best_index() << " " <<bro->get_cost() << std::endl;
+    std::cout << "BEST: "<< game->get_best_index() << " " <<game->get_cost() << std::endl;
 
-    bro->print_distances(0);
-    //bro->print_sets();
+    game->print_distances(0);
+    //game->print_sets();
     std::cout << "-------------PLAY------------" << std::endl;
 
-    bro->play();
+    game->play();
 
-    //bro->print_sets();
-    std::cout << "BEST: "<< bro->get_best_index() << " " <<bro->get_cost() << std::endl;
-    //bro->print_probs();
-    bro->print_distances(bro->get_best_index());
-    bro->print_probs();
+    //game->print_sets();
+    std::cout << "BEST: "<< game->get_best_index() << " " <<game->get_cost() << std::endl;
+    //game->print_probs();
+    game->print_distances(game->get_best_index());
+    game->print_probs();
     return 0;
 }

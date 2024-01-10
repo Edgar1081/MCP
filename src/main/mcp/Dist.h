@@ -32,7 +32,6 @@ public:
 
         std::cout << "SUM " << sum << std::endl;
         for(size_t i = 0; i < size; i++)
-            if(probabilities[i] > 0.01)
                 std::cout << i << "(" << probabilities[i]/sum << ")" << " ";
         std::cout << std::endl;
     }
