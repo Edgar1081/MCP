@@ -18,7 +18,7 @@ private:
     std::shared_ptr<Graph> graph;
     int vertices;
     int seed;
-    int hp;
+    int orig_hp;
     std::shared_ptr<std::unordered_set<int>> prev_subset;
     std::shared_ptr<std::unordered_set<int>> subset;
     std::shared_ptr<Dist> avail;
@@ -31,13 +31,15 @@ private:
     int actual_edges;
     double cost;
     std::uniform_int_distribution<int> distribution;
+    int hp;
 
 public:
     Player(int _index, std::shared_ptr<Graph> _graph, int _vertices, int _seed,
            int _hp, std::shared_ptr<Dist> _avail,
            std::shared_ptr<double []> _probs) :
-        index(_index),graph(_graph), vertices(_vertices), seed(_seed), hp(_hp),
+        index(_index),graph(_graph), vertices(_vertices), seed(_seed), orig_hp(_hp),
         avail(_avail),probs(_probs), generator(seed){
+        hp = orig_hp;
         damage = 0;
         vic = 0;
         max_vertices = graph->getVertices();
@@ -89,6 +91,8 @@ public:
     }
 
     void shoot(){
+        if(hp < 2*orig_hp)
+            hp++;
         vic++;
         damage = 0;
     }
@@ -296,16 +300,13 @@ private:
     }
     //respawn a player closer to the best in the match
     void respawn(std::shared_ptr<Player> best){
+        hp = orig_hp;
         vic = 0;
         damage = 0;
-        // std::uniform_int_distribution<int> clone(0,99);
-        //int percent = clone(generator)*vertices/100;
         init_subset();
-        //land(best, percent);
         prev_subset = std::make_shared<std::unordered_set<int>>(*subset);
         actual_edges = count_edges();
         cost = initial_cost();
-        // closer(percent, best);
     }
 
 };

@@ -54,12 +54,31 @@ public:
         return adjMatrix[i*vertices + j];
     }
 
-    int edges_count(){
+    int get_edges(){
         return n_edges;
     }
 
     std::string to_string(){
         return graph6;
+    }
+
+    std::shared_ptr<Graph> inverse(){
+        std::shared_ptr<int[]> inverseadjMatrix(new int[vertices*vertices]);
+        for (int i = 0; i < vertices; ++i) {
+            for (int j = i+1; j < vertices; ++j) {
+                if(i == j)
+                    continue;
+                if(adjMatrix[i*vertices+j] == 1){
+                    inverseadjMatrix[i * vertices + j] = 0;
+                    inverseadjMatrix[j * vertices + i] = 0;
+                }else{
+                    inverseadjMatrix[i * vertices + j] = 1;
+                    inverseadjMatrix[j * vertices + i] = 1;
+                }
+            }
+        }
+        int max_edges = vertices*(vertices-1)/2;
+        return std::make_shared<Graph>(vertices, inverseadjMatrix, max_edges-n_edges);
     }
 
 private:

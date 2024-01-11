@@ -34,8 +34,8 @@ public:
         seed(_seed), vertices(_vertices), max_vertices(_graph->getVertices()),
         n_players(_n_players), hp(_hp), graph(_graph), eps(_eps),
         cycles(_cycles), prob_step(_prob_step),
-        avail(nullptr),  // Initialize avail to avoid issues
-        players(new std::shared_ptr<Player>[n_players]), gen(_seed),
+        avail(nullptr),
+        players(new std::shared_ptr<Player>[n_players]), gen(seed),
         best_index(0), area(_vertices), radio(1),
         probs(new double[max_vertices]) {
 
@@ -64,6 +64,10 @@ public:
         return players[best_index]->get_cost();
     }
 
+    int get_vertices(){
+        return vertices;
+    }
+
     std::shared_ptr<Player> play(bool prints){
         if(vertices == max_vertices)
             return players[best_index]->clone();
@@ -71,9 +75,9 @@ public:
         int c = 0;
         while(c < cycles && players[best_index]->get_cost() != 0){
             shoot_closer();
-            if(c % 50 == 0){
-                new_probs();
+            if(c % (cycles/10) == 0){
                 radio*=eps;
+                new_probs();
             }
             c++;
             if(prints)
@@ -110,35 +114,42 @@ private:
 
     void shoot_closer(){
         for(int i = 0; i < n_players; i++){
-            double d_best = distance(best_index, i);
-            if(d_best > radio)
-                players[i]->get_injured(players[best_index]);
-            double d = std::numeric_limits<double>::max();
-            int closer = -1;
-            for(int j = 0; j < n_players; j++){
-                if(i == j)
-                    continue;
-                double dmin = distance(i,j);
-                if(dmin < d){
-                    d = dmin;
-                    closer = j;
-                }
-            }
-            if(players[i]->get_cost() < players[closer]->get_cost())
-                atack(i,closer);
-            else
-                atack(closer,i);
 
-            if(players[closer]->get_cost() < players[best_index]->get_cost()){
-                int prev = best_index;
-                best_index = closer;
-                std::cout << "BEST_UPDATED: " << prev << "--------->" << best_index<< std::endl;
+            // double d_best = distance(best_index, i);
+            // if(d_best > radio)
+            //     players[i]->get_injured(players[best_index]);
+            // double d = std::numeric_limits<double>::max();
+            // int closer = -1;
+
+            for(int closer = 0; closer < n_players; closer++){
+                if(i == closer)
+                    continue;
+                // double dmin = distance(i,j);
+                // if(dmin < d){
+                //     d = dmin;
+                //     closer = j;
+                // }
+
+
+                if(players[i]->get_cost() < players[closer]->get_cost())
+                    atack(i,closer);
+                else
+                    atack(closer,i);
+
+                if(players[closer]->get_cost() < players[best_index]->get_cost()){
+                    int prev = best_index;
+                    best_index = closer;
+                    std::cout << "BEST_UPDATED: " << prev << "--------->" << best_index<< std::endl;
+                }
+
+                if(players[i]->get_cost() < players[best_index]->get_cost()){
+                    int prev = best_index;
+                    best_index = i;
+                    std::cout << "BEST_UPDATED: " << prev << "---------->" << best_index<< std::endl;
+                }
+
             }
-            if(players[i]->get_cost() < players[best_index]->get_cost()){
-                int prev = best_index;
-                best_index = i;
-                std::cout << "BEST_UPDATED: " << prev << "---------->" << best_index<< std::endl;
-            }
+
 
 
         }
@@ -192,6 +203,7 @@ private:
         return jaccard_distance(setA,setB);
 
     }
+
     double jaccard_distance(
                             std::shared_ptr<std::unordered_set<int>> A,
                             std::shared_ptr<std::unordered_set<int>> B) {

@@ -7,7 +7,7 @@ executable('read', readfile, c_args : ['-g'])
 
 #Solve
 solvefile = ['src/main/mcp/execs/Solve.cpp']
-executable('solve', solvefile, c_args : ['-g'])
+executable('solve', solvefile, cpp_args : ['-pg'])
 
 # Generate random executable
 genfile = ['src/main/mcp/execs/GenG6.cpp']
@@ -17,13 +17,17 @@ executable('gen', genfile, c_args : ['-g'])
 genkfile = ['src/main/mcp/execs/GenKG6.cpp']
 executable('genk', genkfile, c_args : ['-g'])
 
+# Gen INVERSE graph
+geninversefile = ['src/main/mcp/execs/GenInverse.cpp']
+executable('genin', geninversefile, c_args : ['-g'])
+
 #Insert
 insertfile = ['src/main/mcp/execs/Insert.cpp']
 executable('insert', insertfile, c_args : ['-g'])
 
 # RUN
 runfile = ['src/main/mcp/execs/Run.cpp']
-executable('run', runfile, c_args : ['-g'])
+executable('run', runfile, cpp_args : ['-pg'])
 
 # Prints full list of massses
 # populate = ['src/main/ssp/execs/Populate.cpp']

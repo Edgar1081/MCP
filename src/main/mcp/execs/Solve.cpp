@@ -14,10 +14,14 @@ int main(int argc, char* argv[]) {
     int verticesToSearch = 0;
     int numPlayers = 0;
     int hp = 0;
+    double e = 0.0;
+    int c = 0;
+    double p = 0.0;
+
     std::string filename;
 
     int opt;
-    while ((opt = getopt(argc, argv, "s:a:n:h:f:")) != -1) {
+    while ((opt = getopt(argc, argv, "s:a:n:h:e:c:p:f:")) != -1) {
         switch (opt) {
             case 's':
                 seed = std::stoi(optarg);
@@ -30,6 +34,15 @@ int main(int argc, char* argv[]) {
                 break;
             case 'h':
                 hp = std::stoi(optarg);
+                break;
+            case 'e':
+                e = std::stoi(optarg);
+                break;
+            case 'c':
+                c = std::stoi(optarg);
+                break;
+            case 'p':
+                p = std::stoi(optarg);
                 break;
             case 'f':
                 filename = optarg;
@@ -57,20 +70,18 @@ int main(int argc, char* argv[]) {
 
 
     std::shared_ptr<Game> game =
-        std::make_shared<Game>(seed, verticesToSearch, numPlayers, hp, graph, .99, 10000, .02);
+        std::make_shared<Game>(seed, verticesToSearch, numPlayers, hp, graph, e, c, p);
 
-    std::cout << "BEST: "<< game->get_best_index() << " " <<game->get_cost() << std::endl;
-
-    game->print_distances(0);
-    //game->print_sets();
+    std::cout << "-------------PLAY------------" << std::endl;
+    game->play(true);
     std::cout << "-------------PLAY------------" << std::endl;
 
-    game->play(true);
+    if(game->get_cost() == 0)
+        std::cout << "FOUND K"<< game->get_vertices() << std::endl;
+    else
+        std::cout << "BEST "<< game->get_cost()
+                  << " FOR " << game->get_vertices()
+                  << " VERTICES" << std::endl;
 
-    //game->print_sets();
-    std::cout << "BEST: "<< game->get_best_index() << " " <<game->get_cost() << std::endl;
-    //game->print_probs();
-    game->print_distances(game->get_best_index());
-    game->print_probs();
     return 0;
 }

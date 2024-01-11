@@ -28,7 +28,7 @@ int main(int argn, char* argv[]){
   }
 
   std::shared_ptr<Graph> g = std::make_shared<Graph> (n, adjMatrix, edges);
-  std::cout << g->to_string();
   std::cout << ">>graph6<<" << std::endl;
+  std::cout << g->to_string();
   return 0;
 }
